@@ -31,10 +31,10 @@ const SettingsScreen = () => {
     profileImage: '',
     emailNotifications: false,
     pushNotifications: false,
-    location: { latitude: null, longitude: null },
+    location: { latitude: null as number | null, longitude: null as number | null },
   });
-  const [userId, setUserId] = useState(null);
-  const [doctorId, setDoctorId] = useState(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [doctorId, setDoctorId] = useState<string | null>(null);
 useEffect(() => {
   const fetchUserData = async () => {
     try {
