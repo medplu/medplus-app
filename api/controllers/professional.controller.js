@@ -45,6 +45,7 @@ exports.getProfessionalByUserId = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
     const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage } = req.body;

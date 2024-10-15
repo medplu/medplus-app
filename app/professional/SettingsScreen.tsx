@@ -31,23 +31,26 @@ const SettingsScreen = () => {
     pushNotifications: false,
   });
   const [userId, setUserId] = useState(null);
+  const [doctorId, setDoctorId] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const storedUserId = await AsyncStorage.getItem('userId');
+      const storedDoctorId = await AsyncStorage.getItem('doctorId');
       setUserId(storedUserId);
-      if (storedUserId) {
-        fetchProfile(storedUserId);
+      setDoctorId(storedDoctorId);
+      if (storedDoctorId) {
+        fetchProfile(storedDoctorId);
       }
     };
 
     fetchUserData();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    console.log(`Fetching profile for userId: ${userId}`); // Log the userId
+  const fetchProfile = async (doctorId: string) => {
+    console.log(`Fetching profile for doctorId: ${doctorId}`); // Log the doctorId
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${userId}`);
+      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
@@ -83,7 +86,7 @@ const SettingsScreen = () => {
 
   const updateProfile = async () => {
     try {
-      const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${userId}`, {
+      const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${doctorId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +101,7 @@ const SettingsScreen = () => {
       const data = await response.json();
       console.log('Profile updated successfully:', data);
       setModalVisible(false);
-      fetchProfile(userId); // Fetch updated profile data
+      fetchProfile(doctorId); // Fetch updated profile data
     } catch (error) {
       console.error('Error updating profile:', error);
     }
