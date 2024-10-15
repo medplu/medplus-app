@@ -48,7 +48,7 @@ exports.getProfessionalByUserId = async (req, res) => {
 
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
-    const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage } = req.body;
+    const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage, emailNotifications, pushNotifications, location } = req.body;
 
     try {
         // Build the update object dynamically
@@ -61,6 +61,12 @@ exports.updateProfessionalProfile = async (req, res) => {
         if (certifications) updateFields.certifications = certifications;
         if (bio) updateFields.bio = bio;
         if (profileImage) updateFields.profileImage = profileImage;
+        if (emailNotifications !== undefined) updateFields.emailNotifications = emailNotifications;
+        if (pushNotifications !== undefined) updateFields.pushNotifications = pushNotifications;
+        if (location) {
+            if (location.latitude !== undefined) updateFields['location.latitude'] = location.latitude;
+            if (location.longitude !== undefined) updateFields['location.longitude'] = location.longitude;
+        }
 
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
