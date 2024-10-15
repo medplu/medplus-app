@@ -10,9 +10,25 @@ exports.getProfessionals = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 // Fetch a single professional by doctorId (_id)
 exports.getProfessionalById = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const professional = await Professional.findById(doctorId);
+
+        if (!professional) {
+            return res.status(404).json({ error: 'Professional not found' });
+        }
+
+        res.status(200).json(professional);
+    } catch (error) {
+        console.error("Error fetching professional:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Fetch a single professional by doctorId (_id)
+exports.getProfessionalByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
         console.log(`Fetching professional with userId: ${userId}`); // Log the userId
