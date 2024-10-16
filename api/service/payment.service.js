@@ -120,7 +120,6 @@ class PaymentService {
     }
 
    
-    // New method to create a subaccount
     async createSubaccount(data) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -130,14 +129,14 @@ class PaymentService {
                         console.error('Error creating subaccount:', error); // Log error
                         return reject(`Subaccount creation error: ${error.message}`);
                     }
-
+    
                     // Log the body response for debugging
                     console.log('Response body:', body);
-
+    
                     try {
                         // Parse body only if it's a string
                         const response = typeof body === 'string' ? JSON.parse(body) : body;
-
+    
                         // Check if response is a valid object
                         if (typeof response === 'object' && response !== null) {
                             // Prepare the data for storage
@@ -148,12 +147,12 @@ class PaymentService {
                                 settlement_bank: response.data.settlement_bank,
                                 currency: response.data.currency,
                                 subaccount_code: response.data.subaccount_code,
-                                professional: data.userId, // Include userId in the subaccount data
+                                user: data.userId, // Reference userId from the incoming data
                             };
-
+    
                             // Save subaccount data to the database
                             const newSubaccount = await Subaccount.create(subaccountData);
-
+    
                             console.log('Subaccount saved successfully:', newSubaccount);
                             return resolve({ ...response, saved: newSubaccount });
                         } else {
@@ -173,7 +172,6 @@ class PaymentService {
             }
         });
     }
-
 }
 
 module.exports = PaymentService;
