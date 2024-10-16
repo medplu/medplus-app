@@ -1,5 +1,6 @@
 const axios = require('axios');
 const Payment = require('../models/payment.model');
+const Subaccount = require('../models/sub_account.model');
 const _ = require('lodash');
 const { initializePayment, verifyPayment, createSubaccount } = require('../utils/payment')();
 
@@ -119,11 +120,11 @@ class PaymentService {
     }
 
     // New method to create a subaccount
-    createSubaccount(data) {
+    async createSubaccount(data) {
         return new Promise(async (resolve, reject) => {
             try {
                 // Call createSubaccount with the provided data
-                createSubaccount(data, (error, body) => {
+                createSubaccount(data, async (error, body) => {
                     if (error) {
                         console.error('Error creating subaccount:', error); // Log error
                         return reject(`Subaccount creation error: ${error.message}`);
@@ -138,7 +139,21 @@ class PaymentService {
 
                         // Check if response is a valid object
                         if (typeof response === 'object' && response !== null) {
-                            return resolve(response);
+                            // Prepare the data for storage
+                            const subaccountData = {
+                                business_name: response.data.business_name,
+                                account_number: response.data.account_number,
+                                percentage_charge: response.data.percentage_charge,
+                                settlement_bank: response.data.settlement_bank,
+                                currency: response.data.currency,
+                                subaccount_code: response.data.subaccount_code,
+                            };
+
+                            // Save subaccount data to the database
+                            const newSubaccount = await Subaccount.create(subaccountData);
+
+                            console.log('Subaccount saved successfully:', newSubaccount);
+                            return resolve({ ...response, saved: newSubaccount });
                         } else {
                             console.error('Unexpected response format:', response);  // Log error
                             return reject('Unexpected response format received');

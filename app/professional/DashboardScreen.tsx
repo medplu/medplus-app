@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, Alert, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, ScrollView, TouchableOpacity, Modal, TextInput, Picker } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -14,6 +14,7 @@ const DashboardScreen: React.FC = () => {
     account_number: '',
     percentage_charge: '',
   });
+  const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
 
   useEffect(() => {
     const checkPaymentSetupStatus = async () => {
@@ -26,8 +27,25 @@ const DashboardScreen: React.FC = () => {
     };
 
     checkPaymentSetupStatus();
+    fetchBanks();
   }, []);
 
+  const fetchBanks = async () => {
+    try {
+      const response = await axios.get('https://api.paystack.co/bank?country=kenya', {
+        headers: {
+          Authorization: 'Bearer YOUR_SECRET_KEY',
+        },
+      });
+      const fetchedBanks = response.data.data;
+  
+      setBanks(fetchedBanks);
+    } catch (error) {
+      console.error('Error fetching banks:', error);
+      Alert.alert('Error', 'Failed to fetch banks.');
+    }
+  };
+  
   const handlePaymentSetupComplete = async () => {
     await AsyncStorage.setItem('isPaymentSetupCompleted', 'true');
     setIsPaymentSetupCompleted(true);
@@ -37,10 +55,11 @@ const DashboardScreen: React.FC = () => {
 
   const handleCreateSubaccount = async () => {
     try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/create-subaccount', subaccountData);
+      const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-subaccount', subaccountData);
       Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
       setShowSubaccountModal(false);
     } catch (error) {
+      console.error('Error creating subaccount:', error.response ? error.response.data : error.message);
       Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
     }
   };
@@ -84,12 +103,15 @@ const DashboardScreen: React.FC = () => {
                 value={subaccountData.business_name}
                 onChangeText={(text) => setSubaccountData({ ...subaccountData, business_name: text })}
               />
-              <TextInput
+              <Picker
+                selectedValue={subaccountData.settlement_bank}
                 style={styles.input}
-                placeholder="Settlement Bank"
-                value={subaccountData.settlement_bank}
-                onChangeText={(text) => setSubaccountData({ ...subaccountData, settlement_bank: text })}
-              />
+                onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
+              >
+                {banks.map((bank) => (
+                  <Picker.Item key={bank.code} label={bank.name} value={bank.code} />
+                ))}
+              </Picker>
               <TextInput
                 style={styles.input}
                 placeholder="Account Number"
