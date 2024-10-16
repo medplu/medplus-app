@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, Alert, ScrollView, TouchableOpacity, Modal, TextInput, Picker } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, ScrollView, TouchableOpacity, Modal, TextInput} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
 const DashboardScreen: React.FC = () => {
