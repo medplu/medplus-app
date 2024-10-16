@@ -120,14 +120,14 @@ const DashboardScreen: React.FC = () => {
                 onChangeText={(text) => setSubaccountData({ ...subaccountData, business_name: text })}
               />
               <Picker
-                selectedValue={subaccountData.settlement_bank}
-                style={styles.input}
-                onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
-              >
-                {banks.map((bank) => (
-                  <Picker.Item key={bank.code} label={bank.name} value={bank.code} />
-                ))}
-              </Picker>
+  selectedValue={subaccountData.settlement_bank}
+  style={styles.input}
+  onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
+>
+  {banks.map((bank, index) => (
+    <Picker.Item key={`${bank.code}-${index}`} label={bank.name} value={bank.code} />
+  ))}
+</Picker>
               <TextInput
                 style={styles.input}
                 placeholder="Account Number"
