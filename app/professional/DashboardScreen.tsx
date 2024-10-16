@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, Alert, ScrollView, TouchableOpacity, Modal, TextInput} from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, ScrollView, TouchableOpacity, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
-const DashboardScreen: React.FC = () => {
+const TransactionScreen: React.FC = () => {
   const [isPaymentSetupCompleted, setIsPaymentSetupCompleted] = useState<boolean>(false);
   const [showPaymentSetupModal, setShowPaymentSetupModal] = useState<boolean>(false);
   const [showSubaccountModal, setShowSubaccountModal] = useState<boolean>(false);
@@ -79,11 +78,10 @@ const DashboardScreen: React.FC = () => {
     }
 };
 
-
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        <Text style={styles.title}>Doctor's Dashboard</Text>
+        <Text style={styles.title}>Transaction Screen</Text>
 
         {/* Payment Setup Prompt Modal */}
         <Modal
@@ -92,15 +90,19 @@ const DashboardScreen: React.FC = () => {
           animationType="slide"
           onRequestClose={() => setShowPaymentSetupModal(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Complete Your Payment Setup</Text>
-              <Text style={styles.modalDescription}>
-                To proceed with creating a subaccount, please complete the payment setup. This is a one-time process.
-              </Text>
-              <Button title="Complete Payment Setup" onPress={handlePaymentSetupComplete} />
+          <TouchableWithoutFeedback onPress={() => setShowPaymentSetupModal(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>Complete Your Payment Setup</Text>
+                  <Text style={styles.modalDescription}>
+                    To proceed with creating a subaccount, please complete the payment setup. This is a one-time process.
+                  </Text>
+                  <Button title="Complete Payment Setup" onPress={handlePaymentSetupComplete} />
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
 
         {/* Subaccount Creation Modal */}
@@ -110,45 +112,49 @@ const DashboardScreen: React.FC = () => {
           animationType="slide"
           onRequestClose={() => setShowSubaccountModal(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Create Subaccount</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Business Name"
-                value={subaccountData.business_name}
-                onChangeText={(text) => setSubaccountData({ ...subaccountData, business_name: text })}
-              />
-              <Picker
-  selectedValue={subaccountData.settlement_bank}
-  style={styles.input}
-  onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
->
-  {banks.map((bank, index) => (
-    <Picker.Item key={`${bank.code}-${index}`} label={bank.name} value={bank.code} />
-  ))}
-</Picker>
-              <TextInput
-                style={styles.input}
-                placeholder="Account Number"
-                value={subaccountData.account_number}
-                onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Percentage Charge"
-                value={subaccountData.percentage_charge}
-                onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
-              />
-              <Button title="Create Subaccount" onPress={handleCreateSubaccount} />
+          <TouchableWithoutFeedback onPress={() => setShowSubaccountModal(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>Create Subaccount</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Business Name"
+                    value={subaccountData.business_name}
+                    onChangeText={(text) => setSubaccountData({ ...subaccountData, business_name: text })}
+                  />
+                  <Picker
+                    selectedValue={subaccountData.settlement_bank}
+                    style={styles.input}
+                    onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
+                  >
+                    {banks.map((bank, index) => (
+                      <Picker.Item key={`${bank.code}-${index}`} label={bank.name} value={bank.code} />
+                    ))}
+                  </Picker>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Account Number"
+                    value={subaccountData.account_number}
+                    onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Percentage Charge"
+                    value={subaccountData.percentage_charge}
+                    onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
+                  />
+                  <Button title="Create Subaccount" onPress={handleCreateSubaccount} />
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
 
-        {/* Rest of the dashboard content */}
+        {/* Rest of the transaction content */}
         {isPaymentSetupCompleted ? (
           <Text style={styles.infoText}>
-            Your payment setup is complete. You can now proceed with creating subaccounts and managing appointments.
+            Your payment setup is complete. You can now proceed with creating subaccounts and managing transactions.
           </Text>
         ) : (
           <Text style={styles.infoText}>
@@ -169,9 +175,8 @@ const DashboardScreen: React.FC = () => {
           disabled={!isPaymentSetupCompleted}
         >
           <View style={styles.iconContainer}>
-            <MaterialIcons name="account-circle" size={40} color="#6200ee" />
+            <Text style={styles.details}>Create Subaccount</Text>
           </View>
-          <Text style={styles.details}>Create Subaccount</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -249,4 +254,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DashboardScreen;
+export default TransactionScreen;
