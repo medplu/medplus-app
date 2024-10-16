@@ -166,14 +166,12 @@ exports.handlePaymentWebhook = async (req, res) => {
     // Respond to Paystack that the webhook was received successfully
     res.status(200).send('Webhook received');
 };
-
 // New method to create a subaccount
 exports.createSubaccount = async (req, res) => {
-    const { business_name, settlement_bank, account_number, percentage_charge } = req.body;
-    const userId = req.user.id; // Assuming userId is available in req.user
+    const { business_name, settlement_bank, account_number, percentage_charge, userId } = req.body;
 
-    if (!business_name || !settlement_bank || !account_number || !percentage_charge) {
-        return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Business name, settlement bank, account number, and percentage charge are required.' });
+    if (!business_name || !settlement_bank || !account_number || !percentage_charge || !userId) {
+        return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Business name, settlement bank, account number, percentage charge, and userId are required.' });
     }
 
     try {
