@@ -7,7 +7,7 @@ const SubaccountSchema = new mongoose.Schema({
     settlement_bank: { type: String, required: true },
     currency: { type: String, required: true },
     subaccount_code: { type: String, required: true },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to the User model
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // Reference to the User model
 }, { timestamps: true });
 
 const Subaccount = mongoose.model('Subaccount', SubaccountSchema);

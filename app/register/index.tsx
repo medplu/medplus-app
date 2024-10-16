@@ -90,6 +90,21 @@ const SignupScreen: React.FC = () => {
     }
   };
 
+  const handleVerificationPress = async () => {
+    try {
+      const response = await axios.post('https://medplus-app.onrender.com/api/verify', {
+        email,
+        verificationCode,
+      });
+
+      setErrorMessage(null);
+      setSuccessMessage('Verification successful! You can now log in.');
+      setIsVerifying(false);
+    } catch (error) {
+      setErrorMessage('Verification failed. Please try again.');
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
