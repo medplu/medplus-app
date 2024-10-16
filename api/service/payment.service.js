@@ -119,7 +119,6 @@ class PaymentService {
         });
     }
 
-   
     async createSubaccount(data) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -143,7 +142,7 @@ class PaymentService {
                             const subaccountData = {
                                 business_name: response.data.business_name,
                                 account_number: response.data.account_number,
-                                percentage_charge: response.data.percentage_charge,
+                                percentage_charge: parseFloat(response.data.percentage_charge), // Ensure it's a number
                                 settlement_bank: response.data.settlement_bank,
                                 currency: response.data.currency,
                                 subaccount_code: response.data.subaccount_code,
@@ -156,11 +155,11 @@ class PaymentService {
                             console.log('Subaccount saved successfully:', newSubaccount);
                             return resolve({ ...response, saved: newSubaccount });
                         } else {
-                            console.error('Unexpected response format:', response);  // Log error
+                            console.error('Unexpected response format:', response); // Log error
                             return reject('Unexpected response format received');
                         }
                     } catch (parseError) {
-                        console.error('Error parsing response:', parseError);  // Log parsing error
+                        console.error('Error parsing response:', parseError); // Log parsing error
                         return reject('Error parsing response: ' + parseError.message);
                     }
                 });
@@ -172,6 +171,7 @@ class PaymentService {
             }
         });
     }
+    
 }
 
 module.exports = PaymentService;
