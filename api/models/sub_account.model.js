@@ -7,6 +7,7 @@ const subaccountSchema = new mongoose.Schema({
     settlement_bank: { type: String, required: true },
     currency: { type: String, required: true },
     subaccount_code: { type: String, required: true },
+    professional: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: true }, // Reference to the Professional model
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 }, { timestamps: true });

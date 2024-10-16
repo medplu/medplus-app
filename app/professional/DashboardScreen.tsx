@@ -55,14 +55,29 @@ const DashboardScreen: React.FC = () => {
 
   const handleCreateSubaccount = async () => {
     try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-subaccount', subaccountData);
-      Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
-      setShowSubaccountModal(false);
+        // Retrieve userId from AsyncStorage
+        const userId = await AsyncStorage.getItem('userId'); // Ensure 'userId' is stored in AsyncStorage
+        
+        if (!userId) {
+            Alert.alert('Error', 'User ID not found. Please log in again.');
+            return;
+        }
+
+        // Create the payload with userId
+        const subaccountPayload = {
+            ...subaccountData,
+            userId, // Include userId in the payload
+        };
+
+        const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-subaccount', subaccountPayload);
+        Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
+        setShowSubaccountModal(false);
     } catch (error) {
-      console.error('Error creating subaccount:', error.response ? error.response.data : error.message);
-      Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
+        console.error('Error creating subaccount:', error.response ? error.response.data : error.message);
+        Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
     }
-  };
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
