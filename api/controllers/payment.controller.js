@@ -47,6 +47,7 @@ exports.startPayment = async (req, res) => {
         });
     }
 };
+
 exports.createPayment = async (req, res) => {
     const { reference } = req.query;
 
@@ -164,4 +165,37 @@ exports.handlePaymentWebhook = async (req, res) => {
 
     // Respond to Paystack that the webhook was received successfully
     res.status(200).send('Webhook received');
+};
+
+// New method to create a subaccount
+exports.createSubaccount = async (req, res) => {
+    const { business_name, settlement_bank, account_number, percentage_charge } = req.body;
+
+    if (!business_name || !settlement_bank || !account_number || !percentage_charge) {
+        return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Business name, settlement bank, account number, and percentage charge are required.' });
+    }
+
+    try {
+        console.log('createSubaccount called with body:', req.body);
+
+        const subaccountData = {
+            business_name,
+            settlement_bank,
+            account_number,
+            percentage_charge,
+        };
+
+        console.log('Subaccount data being sent:', subaccountData);
+
+        const response = await paymentInstance.createSubaccount(subaccountData);
+        res.status(200).json({ status: 'Success', data: response });
+    } catch (error) {
+        // Enhanced error handling
+        console.error('Error in createSubaccount:', error); // Log the actual error object
+        res.status(500).json({ 
+            status: 'Failed', 
+            message: 'Subaccount creation failed. Please try again later.',
+            error: error.response ? error.response.data : error.message || error.toString()
+        });
+    }
 };

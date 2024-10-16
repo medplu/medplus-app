@@ -1,7 +1,7 @@
 const axios = require('axios');
 const Payment = require('../models/payment.model');
 const _ = require('lodash');
-const { initializePayment, verifyPayment } = require('../utils/payment')();
+const { initializePayment, verifyPayment, createSubaccount } = require('../utils/payment')();
 
 class PaymentService {
     startPayment(data) {
@@ -113,6 +113,45 @@ class PaymentService {
                 return resolve(transaction);
             } catch (error) {
                 error.source = 'Payment Receipt';
+                return reject(error);
+            }
+        });
+    }
+
+    // New method to create a subaccount
+    createSubaccount(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Call createSubaccount with the provided data
+                createSubaccount(data, (error, body) => {
+                    if (error) {
+                        console.error('Error creating subaccount:', error); // Log error
+                        return reject(`Subaccount creation error: ${error.message}`);
+                    }
+
+                    // Log the body response for debugging
+                    console.log('Response body:', body);
+
+                    try {
+                        // Parse body only if it's a string
+                        const response = typeof body === 'string' ? JSON.parse(body) : body;
+
+                        // Check if response is a valid object
+                        if (typeof response === 'object' && response !== null) {
+                            return resolve(response);
+                        } else {
+                            console.error('Unexpected response format:', response);  // Log error
+                            return reject('Unexpected response format received');
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing response:', parseError);  // Log parsing error
+                        return reject('Error parsing response: ' + parseError.message);
+                    }
+                });
+            } catch (error) {
+                // Log unexpected errors that occur in the try block
+                console.error('Unexpected error in createSubaccount:', error);
+                error.source = 'Create Subaccount Service';
                 return reject(error);
             }
         });
