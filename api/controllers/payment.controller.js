@@ -1,7 +1,7 @@
 const PaymentService = require('../service/payment.service');
 const PaymentModel = require('../models/payment.model');
 const ClinicAppointmentModel = require('../models/appointment.model');
-const SubaccountModel = require('../models/subaccount.model'); // Import the Subaccount model
+const SubaccountModel = require('../models/sub_account.model'); // Import the Subaccount model
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {
