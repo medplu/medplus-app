@@ -56,9 +56,9 @@ const DoctorCardItem = ({ doctor }) => {
 
   const fetchSubaccountCode = async () => {
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/subaccount/${_id}`);
-      setSubaccountCode(response.data.subaccount_code);
-      console.log('Fetched subaccount code:', response.data.subaccount_code);
+      const response = await axios.get(`https://medplus-app.onrender.com/api/subaccount/${_id}`);
+      setSubaccountCode(response.data.data.subaccount_code); // Adjusted to match the response structure
+      console.log('Fetched subaccount code:', response.data.data.subaccount_code);
     } catch (error) {
       console.error('Failed to fetch subaccount code:', error);
     }
