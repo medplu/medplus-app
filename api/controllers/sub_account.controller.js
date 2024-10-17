@@ -1,18 +1,19 @@
 const Subaccount = require('../models/sub_account.model');
 
-
-
 exports.getSubaccountByUserId = async (req, res) => {
-    const { userId } = req.params;
+  const { userId } = req.params;
 
-    try {
-        const subaccount = await Subaccount.findOne({ user: userId });
-        if (!subaccount) {
-            return res.status(404).json({ status: 'Failed', message: 'Subaccount not found' });
-        }
-        res.status(200).json({ status: 'Success', data: subaccount });
-    } catch (error) {
-        console.error('Error fetching subaccount:', error);
-        res.status(500).json({ status: 'Failed', message: 'Internal server error' });
-    }
+  try {
+      // Convert userId to ObjectId
+      const objectId = mongoose.Types.ObjectId(userId);
+
+      const subaccount = await Subaccount.findOne({ user: objectId });
+      if (!subaccount) {
+          return res.status(404).json({ status: 'Failed', message: 'Subaccount not found' });
+      }
+      res.status(200).json({ status: 'Success', data: subaccount });
+  } catch (error) {
+      console.error('Error fetching subaccount:', error);
+      res.status(500).json({ status: 'Failed', message: 'Internal server error' });
+  }
 };

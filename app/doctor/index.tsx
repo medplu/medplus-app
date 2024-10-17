@@ -104,7 +104,7 @@ const DoctorProfile = () => {
             <HorizontalLine />
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
-                {showFullBio ? item.bio : `${item.bio.substring(0, 100)}...`}
+                {showFullBio ? item.bio : `${item.bio?.substring(0, 100) || ''}...`}
               </Text>
               <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}>
                 <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
