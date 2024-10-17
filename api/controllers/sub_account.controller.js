@@ -1,5 +1,4 @@
-import mongoose from 'mongoose'
-
+const mongoose = require('mongoose');
 const Subaccount = require('../models/sub_account.model');
 
 exports.getSubaccountByUserId = async (req, res) => {
