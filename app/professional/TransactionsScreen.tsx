@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, Alert, ScrollView, TouchableOpacity, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, Text, View, Alert, ScrollView, TouchableOpacity, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
@@ -7,6 +7,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; // Import the eye icon
 import Colors from '../../components/Shared/Colors';
 import HorizontalLine from '../../components/common/HorizontalLine';
+import { PAYSTACK_SECRET_KEY } from 'react-native-dotenv'; // Import the environment variable
 
 const TransactionScreen: React.FC = () => {
   const [isPaymentSetupCompleted, setIsPaymentSetupCompleted] = useState<boolean>(false);
@@ -20,8 +21,10 @@ const TransactionScreen: React.FC = () => {
   });
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
   const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false); // Add state for toggling visibility
+  const [transactions, setTransactions] = useState<any[]>([]); // Add state for transactions
 
   useEffect(() => {
+    console.log('useEffect triggered'); // Debug log to check if useEffect is firing
     const checkPaymentSetupStatus = async () => {
       const status = await AsyncStorage.getItem('isPaymentSetupCompleted');
       if (!status) {
@@ -34,13 +37,14 @@ const TransactionScreen: React.FC = () => {
     checkPaymentSetupStatus();
     fetchBanks();
     fetchSubaccountInfo();
+    fetchTransactions(); // Fetch transactions
   }, []);
 
   const fetchBanks = async () => {
     try {
       const response = await axios.get('https://api.paystack.co/bank?country=kenya', {
         headers: {
-          Authorization: 'Bearer YOUR_SECRET_KEY',
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
         },
       });
       const fetchedBanks = response.data.data;
@@ -64,6 +68,29 @@ const TransactionScreen: React.FC = () => {
     } catch (error) {
       console.error('Error fetching subaccount info:', error);
       Alert.alert('Error', 'Failed to fetch subaccount info.');
+    }
+  };
+
+  const fetchTransactions = async () => {
+    console.log('fetchTransactions called'); // Debug log
+    try {
+      const reference = await AsyncStorage.getItem('transactionReference');
+      console.log(reference)
+      if (!reference) {
+        Alert.alert('Error', 'Transaction reference not found. Please try again.');
+        return;
+      }
+  
+      const response = await axios.get(`https://api.paystack.co/transaction/${reference}`, {
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        },
+      });
+      console.log('Transactions fetched:', response.data); // Debug log
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      Alert.alert('Error', 'Failed to fetch transactions.');
     }
   };
 
@@ -137,7 +164,7 @@ const TransactionScreen: React.FC = () => {
           disabled={!isPaymentSetupCompleted}
         >
           <View style={styles.iconContainer}>
-            <Text style={styles.details}>Create Subaccount</Text>
+            <Text style={styles.details}>Update Payment</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -148,16 +175,13 @@ const TransactionScreen: React.FC = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Transaction History</Text>
-        <View style={styles.transactionCard}>
-          <Text style={styles.transactionText}>Payment to XYZ Hospital</Text>
-          <Text style={styles.transactionText}>Amount: KES 5,000</Text>
-          <Text style={styles.transactionDate}>Date: 16 Oct 2024</Text>
-        </View>
-        <View style={styles.transactionCard}>
-          <Text style={styles.transactionText}>Received from ABC Medical</Text>
-          <Text style={styles.transactionText}>Amount: KES 10,000</Text>
-          <Text style={styles.transactionDate}>Date: 12 Oct 2024</Text>
-        </View>
+        {transactions.map((transaction, index) => (
+          <View key={index} style={styles.transactionCard}>
+            <Text style={styles.transactionText}>{transaction.description}</Text>
+            <Text style={styles.transactionText}>Amount: {transaction.amount}</Text>
+            <Text style={styles.transactionDate}>Date: {new Date(transaction.date).toLocaleDateString()}</Text>
+          </View>
+        ))}
       </View>
 
       {/* Payment Setup Prompt Modal */}
@@ -200,7 +224,9 @@ const TransactionScreen: React.FC = () => {
                   value={subaccountData.percentage_charge}
                   onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
                 />
-                <Button title="Create Subaccount" onPress={handleCreateSubaccount} />
+                <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
+                  <Text style={styles.buttonText}>Confirm Updates</Text>
+                </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -247,7 +273,9 @@ const TransactionScreen: React.FC = () => {
                   value={subaccountData.percentage_charge}
                   onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
                 />
-                <Button title="Create Subaccount" onPress={handleCreateSubaccount} />
+                <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
+                  <Text style={styles.buttonText}>Confirm Updates</Text>
+                </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -261,6 +289,18 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: Colors.ligh_gray,
+  },
+  button: {
+    backgroundColor: 'rgba(111, 202, 186, 1)',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   container: {
     padding: 16,

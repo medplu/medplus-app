@@ -69,6 +69,20 @@ class PaymentService {
             }
         });
     }
+    
+    async fetchTransactionByReference(reference) {
+        try {
+            const response = await axios.get(`${this.baseUrl}/transaction/verify/${reference}`, {
+                headers: {
+                    Authorization: `Bearer ${this.secretKey}`,
+                },
+            });
+            return response.data; // Contains transaction details
+        } catch (error) {
+            console.error('Error fetching transaction:', error.response ? error.response.data : error.message);
+            throw new Error('Unable to fetch transaction details');
+        }
+    }
 
     createPayment(req) {
         const ref = req.reference;

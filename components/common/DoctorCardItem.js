@@ -19,6 +19,7 @@ const DoctorCardItem = ({ doctor }) => {
   const [alertType, setAlertType] = useState('success');
   const [appointmentId, setAppointmentId] = useState(null);
   const [user, setUser] = useState({ firstName: '', lastName: '', email: '', userId: '' });
+  const [subaccountCode, setSubaccountCode] = useState(null); // State to store subaccount code
 
   const paystackWebViewRef = useRef();
 
@@ -37,6 +38,7 @@ const DoctorCardItem = ({ doctor }) => {
 
     fetchUserId();
     getUserData();
+    fetchSubaccountCode(); // Fetch subaccount code when component mounts
   }, []);
 
   const getUserData = async () => {
@@ -52,6 +54,16 @@ const DoctorCardItem = ({ doctor }) => {
     }
   };
 
+  const fetchSubaccountCode = async () => {
+    try {
+      const response = await axios.get(`https://medplus-app.onrender.com/subaccount/${_id}`);
+      setSubaccountCode(response.data.subaccount_code);
+      console.log('Fetched subaccount code:', response.data.subaccount_code);
+    } catch (error) {
+      console.error('Failed to fetch subaccount code:', error);
+    }
+  };
+
   const handleBookPress = async () => {
     setIsSubmitting(true);
     try {
@@ -61,7 +73,8 @@ const DoctorCardItem = ({ doctor }) => {
         userId: user.userId,
         patientName: `${user.firstName} ${user.lastName}`,
         date: new Date().toISOString().split('T')[0],
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        subaccount: subaccountCode // Include subaccount code in the booking request
       });
 
       const appointmentId = appointmentResponse.data._id;
@@ -168,7 +181,7 @@ const DoctorCardItem = ({ doctor }) => {
       {appointmentId && (
         <Paystack
           paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-          amount={'25000.00'}
+          amount={consultationFee * 100} // Use the consultation fee for the payment amount
           billingEmail={user.email}
           currency='KES'
           activityIndicatorColor={Colors.primary}
