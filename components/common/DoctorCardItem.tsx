@@ -5,41 +5,51 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../Shared/Colors';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Paystack } from 'react-native-paystack-webview';
+import { Paystack, paystackProps } from 'react-native-paystack-webview';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { useRouter } from 'expo-router';
 
-const DoctorCardItem = ({ doctor }) => {
-  const { firstName, lastName, category, availability, _id, consultationFee } = doctor;
+// Importing the SECRET_KEY from .env
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+
+interface Doctor {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  category: string;
+  availability: boolean;
+  user: string;
+}
+
+interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+  userId: string;
+}
+
+interface DoctorCardItemProps {
+  doctor: Doctor;
+  userId: string;
+  consultationFee: number;
+}
+
+const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consultationFee }) => {
+  const paystackWebViewRef = useRef<paystackProps.PayStackRef>(null);
+  const { firstName, lastName, category, availability, _id } = doctor;
   const router = useRouter();
-  const [userId, setUserId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const [alertType, setAlertType] = useState('success');
-  const [appointmentId, setAppointmentId] = useState(null);
-  const [user, setUser] = useState({ firstName: '', lastName: '', email: '', userId: '' });
-  const [subaccountCode, setSubaccountCode] = useState(null); // State to store subaccount code
-
-  const paystackWebViewRef = useRef();
+  const [alertType, setAlertType] = useState<'success' | 'error'>('success');
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [user, setUser] = useState<User>({ firstName: '', lastName: '', email: '', userId: '' });
+  const [subaccountCode, setSubaccountCode] = useState<string | null>(null); // State to store subaccount code
 
   useEffect(() => {
-    const fetchUserId = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        if (storedUserId) {
-          setUserId(storedUserId);
-          console.log('Fetched userId:', storedUserId);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user ID from AsyncStorage', error);
-      }
-    };
-
-    fetchUserId();
     getUserData();
     fetchSubaccountCode(); // Fetch subaccount code when component mounts
-  }, []);
+  }, [userId]);
 
   const getUserData = async () => {
     try {
@@ -47,18 +57,25 @@ const DoctorCardItem = ({ doctor }) => {
       const lastName = await AsyncStorage.getItem('lastName');
       const email = await AsyncStorage.getItem('email');
       const userId = await AsyncStorage.getItem('userId');
-      setUser({ firstName, lastName, email, userId });
-      console.log('Fetched user data:', { firstName, lastName, email, userId });
+      if (firstName && lastName && email && userId) {
+        setUser({ firstName, lastName, email, userId });
+        console.log('Fetched user data:', { firstName, lastName, email, userId });
+      }
     } catch (error) {
       console.error('Failed to load user data', error);
     }
   };
 
   const fetchSubaccountCode = async () => {
+    if (!userId) return; // Ensure userId is available before making the request
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/subaccount/${_id}`);
-      setSubaccountCode(response.data.data.subaccount_code); // Adjusted to match the response structure
-      console.log('Fetched subaccount code:', response.data.data.subaccount_code);
+      const response = await axios.get(`https://medplus-app.onrender.com/api/subaccount/${userId}`);
+      if (response.data.status === 'Success') {
+        setSubaccountCode(response.data.data.subaccount_code); // Adjusted to match the response structure
+        console.log('Fetched subaccount code:', response.data.data.subaccount_code);
+      } else {
+        console.error('Failed to fetch subaccount code:', response.data.message);
+      }
     } catch (error) {
       console.error('Failed to fetch subaccount code:', error);
     }
@@ -68,13 +85,26 @@ const DoctorCardItem = ({ doctor }) => {
     setIsSubmitting(true);
     try {
       console.log('Booking appointment with doctorId:', _id, 'and userId:', user.userId);
+      
+      // Initialize the transaction here to get the payment URL from Paystack
+      const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
+        email: user.email,
+        amount: consultationFee * 100, // Paystack expects the amount in kobo
+        subaccount: subaccountCode,
+      }, {
+        headers: {
+          'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`, // Use the secret key from .env
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Create appointment record after payment initialization
       const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/appointments', {
         doctorId: _id,
         userId: user.userId,
         patientName: `${user.firstName} ${user.lastName}`,
         date: new Date().toISOString().split('T')[0],
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        subaccount: subaccountCode // Include subaccount code in the booking request
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
 
       const appointmentId = appointmentResponse.data._id;
@@ -83,10 +113,7 @@ const DoctorCardItem = ({ doctor }) => {
 
       // Ensure paystackWebViewRef.current is defined before calling startTransaction
       if (paystackWebViewRef.current) {
-        paystackWebViewRef.current.startTransaction({
-          onSuccess: (response) => handlePaymentSuccess(response, appointmentId),
-          onCancel: handlePaymentCancel
-        });
+        paystackWebViewRef.current.startTransaction();
       } else {
         console.error('paystackWebViewRef.current is undefined');
       }
@@ -99,7 +126,7 @@ const DoctorCardItem = ({ doctor }) => {
     }
   };
 
-  const handlePaymentSuccess = async (response, appointmentId) => {
+  const handlePaymentSuccess = async (response: any, appointmentId: string) => {
     try {
       console.log('Payment successful:', response);
       console.log('Confirming appointment with appointmentId:', appointmentId);
@@ -178,32 +205,28 @@ const DoctorCardItem = ({ doctor }) => {
         )}
       </TouchableOpacity>
 
-      {appointmentId && (
-        <Paystack
-          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-          amount={consultationFee * 100} // Use the consultation fee for the payment amount
-          billingEmail={user.email}
-          currency='KES'
-          activityIndicatorColor={Colors.primary}
-          onCancel={handlePaymentCancel}
-          onSuccess={(response) => handlePaymentSuccess(response, appointmentId)}
-          ref={paystackWebViewRef}
-        />
-      )}
+      <Paystack
+        paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+        amount={consultationFee * 100} // Amount in kobo
+        billingEmail={user.email}
+        currency='KES'
+        activityIndicatorColor={Colors.primary}
+        onCancel={handlePaymentCancel}
+        onSuccess={(response) => handlePaymentSuccess(response, appointmentId!)}
+        ref={paystackWebViewRef}
+      />
 
       <AwesomeAlert
         show={showAlert}
-        showProgress={false}
         title={alertType === 'success' ? 'Success' : 'Error'}
         message={alertMessage}
         closeOnTouchOutside={true}
         closeOnHardwareBackPress={false}
+        showCancelButton={false}
         showConfirmButton={true}
         confirmText="OK"
         confirmButtonColor={Colors.primary}
-        onConfirmPressed={() => {
-          setShowAlert(false);
-        }}
+        onConfirmPressed={() => setShowAlert(false)}
       />
     </View>
   );
@@ -212,35 +235,31 @@ const DoctorCardItem = ({ doctor }) => {
 const styles = StyleSheet.create({
   doctorName: {
     fontSize: 16,
-    fontFamily: 'Inter-Black-Bold'
+    fontFamily: 'Inter-Black-Semi'
   },
   categoryName: {
-    fontSize: 16,
-    fontFamily: 'Inter-Black',
-    color: Colors.gray
+    fontSize: 14,
+    fontFamily: 'Inter-Regular'
+  },
+  cardContainer: {
+    margin: 10,
+    borderRadius: 15,
+    elevation: 5,
+    backgroundColor: '#FFF',
+    padding: 10
   },
   makeAppointmentContainer: {
-    backgroundColor: Colors.SECONDARY,
+    backgroundColor: Colors.lightGray,
     padding: 10,
-    borderRadius: 9,
+    borderRadius: 10,
+    marginTop: 10,
     alignItems: 'center'
   },
   headingContainer: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.SECONDARY,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 99,
     gap: 5
-  },
-  cardContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: 20,
-    padding: 12,
-    gap: 10
   }
 });
 
